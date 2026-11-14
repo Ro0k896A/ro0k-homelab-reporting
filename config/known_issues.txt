@@ -1,0 +1,5 @@
+grafana_old container is stopped with 48 restarts (leftover, not yet cleaned up)
+openipmi.service fails on boot (no BMC on this hardware, expected)
+Restic setup deferred: two repos configured, backup status not assessed
+Backups share one filesystem with the data they protect
+/srv/stack (Vaultwarden, other app data) is not covered by the Restic jobs
