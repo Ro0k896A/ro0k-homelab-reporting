@@ -8,6 +8,7 @@ REPO="$(cd "$(dirname "$0")/../.." && pwd)"
 LOG=/srv/data/reports/logs/publish.log
 log() { echo "$(date -Is) [$P] $*" >> "$LOG"; }
 die() { log "REFUSED/FAILED: $2"; echo "$2" >&2; exit "$1"; }
+discard() { if git ls-files --error-unmatch -- "$REL" >/dev/null 2>&1; then git checkout -q -- "$REL"; else rm -f "$OUT"; fi; }
 
 [ "$(id -u)" -ne 0 ] || die 1 "do not run as root"
 exec 9>/tmp/g600-publish.lock
@@ -25,10 +26,10 @@ REL=${OUT#"$REPO"/}
 
 # Sanitization gate: refuse to publish anything resembling a secret or an IP address
 if grep -I -n -i -E 'password|passwd|secret|token|api[_-]?key|BEGIN [A-Z ]*PRIVATE|([0-9]{1,3}\.){3}[0-9]{1,3}' "$OUT" >>"$LOG"; then
-  rm -f "$OUT"; die 1 "sanitization gate tripped (see log); report discarded"
+  discard; die 1 "sanitization gate tripped (see log); report discarded"
 fi
 
-if [ -n "$DRY_RUN" ]; then log "DRY_RUN ok: $REL"; echo "DRY RUN: would publish $REL"; rm -f "$OUT"; exit 0; fi
+if [ -n "$DRY_RUN" ]; then log "DRY_RUN ok: $REL"; echo "DRY RUN: would publish $REL"; discard; exit 0; fi
 
 git add -- "$REL"
 if git diff --cached --quiet; then log "nothing to commit"; exit 0; fi
